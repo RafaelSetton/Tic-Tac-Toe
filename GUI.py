@@ -1,5 +1,6 @@
 from time import sleep
 import pygame
+AI = __import__("AI")
 pygame.init()
 
 
@@ -14,6 +15,30 @@ class Game:
         self.p2 = {'points': 0, 'figure': self.o, 'num': 2}
         self.turn = self.p1
         self.font = pygame.font.SysFont('Agency FB', 120, True)
+        self.vsAI = self.choose_mode()
+        self.AIPlayer = AI.AI(self.p2['num'])
+
+    def choose_mode(self):
+        w = self.tela.get_width()
+        h = self.tela.get_height()
+        pygame.draw.rect(self.tela, (0, 255, 0), ((0, 100), (w // 2, h - 200)))
+        text = self.font.render("P v P", True, (255, 255, 255))
+        pos = (w//4 - text.get_width()//2, h//2 - text.get_height()//2)
+        self.tela.blit(text, pos)
+
+        pygame.draw.rect(self.tela, (255, 0, 0), ((w // 2, 100), (w // 2, h - 200)))
+        text = self.font.render("P v AI", True, (255, 255, 255))
+        pos = (3 * w // 4 - text.get_width() // 2, h // 2 - text.get_height() // 2)
+        self.tela.blit(text, pos)
+
+        pygame.display.update()
+        while True:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    self.running = False
+                    return
+                elif event.type == pygame.MOUSEBUTTONDOWN:
+                    return event.pos[0] > w//2
 
     def x(self, x, y):
         square = self.SQUARE_SIZE
@@ -51,9 +76,8 @@ class Game:
                     self.p2['figure'](x, y)
                 else:
                     zeros += 1
-        if zeros == 0:
+        if zeros == 0 or self.AIPlayer.check_win(self.board) != 0:
             pygame.display.update()
-            self.board = [[0, 0, 0] for _ in range(3)]
             sleep(2)
 
         # Points
@@ -74,30 +98,23 @@ class Game:
                 try:
                     if self.board[x][y] == 0:
                         self.board[x][y] = num
-                        self.change_turn()
+                        if self.vsAI:
+                            self.blit()
+                            sleep(0.5)
+                            self.AIPlayer.best_move(self.board)
+                            pygame.event.get()
+                        else:
+                            self.change_turn()
                 except IndexError:
                     pass
-        if self.check_win() == 0:
+        if self.AIPlayer.check_win(self.board) == 0:
             return
-        elif self.check_win() == 1:
+        elif self.AIPlayer.check_win(self.board) == 1:
             self.p1['points'] += 1
         else:
             self.p2['points'] += 1
         self.blit()
-        sleep(2)
         self.board = [[0, 0, 0] for _ in range(3)]
-
-    def check_win(self):
-        conds = (self.board[0][0] == self.board[1][1] == self.board[2][2] != 0,
-                 self.board[2][0] == self.board[1][1] == self.board[0][2] != 0)
-        if any(conds):
-            return self.board[1][1]
-        for x in range(3):
-            if self.board[x][0] == self.board[x][1] == self.board[x][2] != 0:
-                return self.board[x][0]
-            if self.board[0][x] == self.board[1][x] == self.board[2][x] != 0:
-                return self.board[0][x]
-        return 0
 
     def loop(self):
         while self.running:
@@ -105,4 +122,5 @@ class Game:
             self.event_handler()
 
 
-Game().loop()
+if __name__ == '__main__':
+    Game().loop()
