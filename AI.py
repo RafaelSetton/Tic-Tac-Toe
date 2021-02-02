@@ -1,7 +1,7 @@
 from copy import deepcopy
 
 
-class AI:
+class MiniMaxAI:
     def __init__(self, number):
         self.number = number
 
@@ -59,16 +59,16 @@ class AI:
                 board[1][1] = self.number
             else:
                 board[0][0] = self.number
-                return
+            return
         best = -10
         move = tuple()
-        for l in range(3):
-            for c in range(3):
-                if board[l][c] == 0:
+        for li in range(3):
+            for co in range(3):
+                if board[li][co] == 0:
                     copy = deepcopy(board)
-                    copy[l][c] = self.number
+                    copy[li][co] = self.number
                     score = self.minimax(copy, 0, False)
                     if score > best:
                         best = score
-                        move = (l, c)
+                        move = (li, co)
         board[move[0]][move[1]] = self.number
